@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Normie</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="utf-8"/>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type="text/javascript" src="main.js"></script>
+</head>
+<body>
+<h1>Normie</h1>
+
+<span class="intro">Normie is the normalisation tool. It will be Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in </span>
+
+<div class="form_center">
+	<div class="form_left">
+		<form>
+			<span class="bold">Attributes:</span> (Comma seperated)<br>
+			<input type="text" id="attributes_in" class="attributes_in" ><br><br>
+			<span class="bold">Functional Dependencies</span> (Comma seperated)<br>
+			<span id="input_form"></span>
+			<button type="button" onclick="fd_input()">Add FD</button><br>
+
+			<br>
+			<div style="text-align: right;">
+			<button class="option red" type="button" onclick="initialize()">Reset</button><br>
+			</div>
+			<br>
+			<button class="option blue" type="button" onclick="find_minimal_cover()">Minimal Cover</button><br>
+			<span id="minimal_cover_field"></span>
+			<button class="option blue" type="button" onclick="find_candidate_keys()">Candidate Keys</button><br>
+			<button class="option blue" type="button" onclick="find_normal_form()">Normal Form</button><br>
+		</form>
+	</div>
+</div>
+
+
+
+</body>
+</html>
