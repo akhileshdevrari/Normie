@@ -235,7 +235,7 @@ function minimal_cover()
 	// print();
 
 
-	//Remove redundant FDs (those that are implied by others)
+	//Remove duplicate entries i.e if two FDs are identical, remove one
 	for(var i=0; i<fd_lhs.length; i++)
 	{
 		for(var j=i+1; j<fd_lhs.length; j++)
@@ -265,6 +265,100 @@ function minimal_cover()
 			}
 		}
 	}
+
+	// console.log("print:    ");
+	// print();
+
+
+	//Remove redundant FDs (those that are implied by others)
+	//One by one try check if Closure of entire LHS remains same on removing a FD, remove that FD
+	for(var i=0; i<fd_lhs.length; i++)
+	{
+		for(var m=0; m<fd_rhs[i].length; m++)
+		{
+			var temp_fd_lhs = [];
+			var temp_fd_rhs = [];
+			for(var j=0; j<fd_lhs.length; j++)
+				temp_fd_lhs[j] = fd_lhs[j].slice();
+			for(var j=0; j<fd_rhs.length; j++)
+				temp_fd_rhs[j] = fd_rhs[j].slice();
+			temp_fd_rhs[i].splice(m, 1);
+			// if closure of fd_lhs[i] contains fd_rhs[i], remove fd_lhs[i]
+			var closure = find_closure(fd_lhs[i], temp_fd_lhs, temp_fd_rhs);
+
+			var j;
+			for(j=0; j<fd_rhs[i].length; j++)
+			{
+				var k;
+				for(k=0; k<closure.length; k++)
+				{
+					if(closure[k] == fd_rhs[i][j])
+						break;
+				}
+				if(k == closure.length)
+					break;
+			}
+			if(j == fd_rhs[i].length)	// All elements in fd_rhs[i] are present in closure
+			{
+				fd_rhs[i].splice(m, 1);
+				m--;
+			}
+		}
+	}
+}
+
+function find_closure(lhs, temp_fd_lhs, temp_fd_rhs)
+{
+	var closure = lhs.slice();
+	var new_rhs_coming = true;
+	while(new_rhs_coming)
+	{
+		new_rhs_coming = false;
+		for(var i=0; i<temp_fd_lhs.length; i++)
+		{
+			var lhs_in_closure = true;
+			for(var j=0; j<temp_fd_lhs[i].length; j++)
+			{
+				var lhs_ij_in_closure = false;
+				for(var k=0; k<closure.length; k++)
+				{
+					if(closure[k] == temp_fd_lhs[i][j])
+					{
+						lhs_ij_in_closure = true;
+						break;
+					}
+				}
+				if(lhs_ij_in_closure == false)
+				{
+					lhs_in_closure = false;
+					break;
+				}
+			}
+			if(lhs_in_closure)
+			{
+				for(var j=0; j<temp_fd_rhs[i].length; j++)
+				{
+					//if fd_rhs[i][j]  is not in closure, add it to closure and mark new_rhs_coming as true
+					var rhs_ij_in_closure = false;
+					for(var k=0; k<closure.length; k++)
+					{
+						if(closure[k] == temp_fd_rhs[i][j])
+						{
+							rhs_ij_in_closure = true;
+							break;
+						}
+					}
+					if(rhs_ij_in_closure == false)
+					{
+						new_rhs_coming = true;
+						closure.push(temp_fd_rhs[i][j]);
+					}
+				}
+			}
+		}
+	}
+	closure.sort();
+	return closure;
 }
 
 function print()
@@ -300,7 +394,6 @@ function print_minimal_cover()
 			for(var k=0; k<fd_lhs[i].length; k++)
 				field += fd_lhs[i][k]+" ";
 			field += "  ->  "+fd_rhs[i][j]+"<br>";
-			console.log("fdrhsij = "+fd_rhs[i][j]);
 		}
 	}
 	field += "</fieldset><br>";
