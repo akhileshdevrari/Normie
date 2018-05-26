@@ -3,6 +3,8 @@ var attributes = new Array();
 var fd_lhs = new Array();
 var fd_rhs = new Array();
 var minimal_cover_num = 0;
+var candidate_keys_num = 0;
+var candidate_keys = new Array();
 
 window.addEventListener("load", initialize);
 
@@ -11,9 +13,13 @@ function initialize()
 	attributes = new Array();
 	fd_lhs = new Array();
 	fd_rhs = new Array();
+	candidate_keys = new Array();
 	if(minimal_cover_num%2 == 1)
-		find_minimal_cover();
+		main_minimal_cover();
 	minimal_cover_num = 0;
+	if(candidate_keys_num%2 == 1)
+		main_candidate_keys();
+	candidate_keys_num = 0;
 	document.getElementById('attributes_in').value = "";
 	for(var i=1; i<fd_num; i++)
 		delete_fd(i);
@@ -116,8 +122,11 @@ function error()
 	console.log("Apna Error\n");
 }
 
-function minimal_cover()
+function find_minimal_cover()
 {
+	// Start with filling attibutes[], fd_lhs[] and fd_rhs[] with initial data
+	lexer();
+
 	//remove trivial FDs
 	for(var i = 0; i<fd_rhs.length; i++)
 	{
@@ -135,11 +144,6 @@ function minimal_cover()
 			}
 		}
 	}
-
-	// console.log("After removing trivial FDs\n");
-	// print();
-
-
 
 	//Minimize LHS of each FD
 	//Check each attribute in fd_lhs, if it's present in fd_rhs and its fd_lhs counterpart there has it's fd_lhs collegues here, remove it
@@ -181,9 +185,6 @@ function minimal_cover()
 			}
 		}
 	}
-
-	// console.log("After Minimize LHS 1\n");
-	// print();
 
 
 	//Minimize LHS. If for some attribute in RHS, l1 and l2 are two LHS..... if l1 is subset of l2, delete l1
@@ -231,10 +232,6 @@ function minimal_cover()
 		}
 	}
 
-	// console.log("After Minimize LHS 2 \n");
-	// print();
-
-
 	//Remove duplicate entries i.e if two FDs are identical, remove one
 	for(var i=0; i<fd_lhs.length; i++)
 	{
@@ -265,10 +262,6 @@ function minimal_cover()
 			}
 		}
 	}
-
-	// console.log("print:    ");
-	// print();
-
 
 	//Remove redundant FDs (those that are implied by others)
 	//One by one try check if Closure of entire LHS remains same on removing a FD, remove that FD
@@ -361,53 +354,32 @@ function find_closure(lhs, temp_fd_lhs, temp_fd_rhs)
 	return closure;
 }
 
-function print()
-{
-	console.log("attributes:\n");
-	for(var i=0; i<attributes.length; i++)
-		console.log(attributes[i]+"  ");
-	console.log("\n");
-	console.log("fd_lhs: len = "+fd_lhs.length+"  \n");
-	for(var i=0; i<fd_lhs.length; i++)
-	{
-		console.log("i = "+i+"\n");
-		for(var j=0; j<fd_lhs[i].length; j++)
-			console.log(fd_lhs[i][j]+" , ");
-		console.log("\n");
-	}
-	for(var i=0; i<fd_rhs.length; i++)
-	{
-		console.log("i = "+i+"\n");
-		for(var j=0; j<fd_rhs[i].length; j++)
-			console.log(fd_rhs[i][j]+" , ");
-		console.log("\n");
-	}
-}
-
 function print_minimal_cover()
 {
 	var field = "<fieldset>";
+	field += "<ul style=\"list-style-type:none\">";
 	for(var i=0; i<fd_lhs.length; i++)
 	{
 		for(var j=0; j<fd_rhs[i].length; j++)
 		{
+			field += "<li>"
 			for(var k=0; k<fd_lhs[i].length; k++)
 				field += fd_lhs[i][k]+" ";
-			field += "  ->  "+fd_rhs[i][j]+"<br>";
+			field += "  ->  "+fd_rhs[i][j];
+			field += "</li>";
 		}
 	}
+	field += "</ul>"
 	field += "</fieldset><br>";
 	document.getElementById("minimal_cover_field").innerHTML = field;
 }
 
 
-
-function find_minimal_cover()
+function main_minimal_cover()
 {
 	if(minimal_cover_num % 2 == 0)
 	{
-			lexer();
-			minimal_cover();
+			find_minimal_cover();
 			print_minimal_cover();
 	}
 	else
@@ -419,7 +391,186 @@ function find_minimal_cover()
 
 function find_candidate_keys()
 {
+	//Reset candidate_keys[]
+	candidate_keys = new Array();
 
+	var not_on_rhs = new Array();	//Every candidate key will have these attributes
+											//potential_key_store =  R-OnRHSNotOnLHS-ClosureSet(NotOnRHS)
+	var potential_key_store = new Array();	//Apart from attributes of not_on_rhs and candidate keys contains attributes from this set
+	var closure_not_on_rhs = new Array();	//Closure of not_on_rhs set
+	for(var i=0; i<attributes.length; i++)
+	{
+		var in_rhs = false;
+		for(var j=0; j<fd_rhs.length && in_rhs==false; j++)
+		{
+			for(var k=0; k<fd_rhs[j].length && in_rhs==false; k++)
+			{
+				if(fd_rhs[j][k] == attributes[i])
+					in_rhs = true;
+			}
+		}
+		if(in_rhs == false)
+			not_on_rhs.push(attributes[i]);
+	}
+
+	closure_not_on_rhs = find_closure(not_on_rhs, fd_lhs, fd_rhs);
+
+	potential_key_store = attributes.slice();
+	// Remove attribues from potential_key_store which are present in closure_not_on_rhs
+	for(var i=0; i<potential_key_store.length; i++)
+	{
+		var j;
+		for(j=0; j<closure_not_on_rhs.length; j++)
+		{
+			if(closure_not_on_rhs[j] == potential_key_store[i])
+				break;
+		}
+		if(j != closure_not_on_rhs.length)
+		{
+			potential_key_store.splice(i, 1);
+			i--;
+		}
+	}
+	// Remove attribues from potential_key_store which are present in rhs but not in lhs
+	for(var i=0; i<potential_key_store.length; i++)
+	{
+		var in_lhs = false;
+		var in_rhs = false;
+		for(var j=0; j<fd_lhs.length && in_lhs==false; j++)
+		{
+			for(var k=0; k<fd_lhs[j].length && in_lhs==false; k++)
+			{
+				if(fd_lhs[j][k] == potential_key_store[i])
+					in_lhs = true;
+			}
+		}
+		for(var j=0; j<fd_rhs.length && in_rhs==false; j++)
+		{
+			for(var k=0; k<fd_rhs[j].length && in_rhs==false; k++)
+			{
+				if(fd_rhs[j][k] == potential_key_store[i])
+					in_rhs = true;
+			}
+		}
+		if(in_rhs==true && in_lhs==false)
+		{
+			potential_key_store.splice(i, 1);
+			i--;
+		}
+	}
+
+	var closure = find_closure(not_on_rhs, fd_lhs, fd_rhs);
+	if(closure.length == attributes.length)		//not_on_rhs is the only candidate key
+		candidate_keys.push(not_on_rhs);
+	else 		//make candidate keys from not_on_rhs and potential_key_store set
+		make_candidate_keys(potential_key_store, not_on_rhs, not_on_rhs);
+
+	//Now we have all candidate keys, just sort them and remove empty candidate keys
+	for(var i=0; i<candidate_keys.length; i++)
+	{
+		if(candidate_keys[i].length == 0)
+		{
+			candidate_keys.splice(i, 1);
+			i--;
+			continue;
+		}
+		candidate_keys[i].sort();
+	}
+	//Remove duplicates from candidate_keys[]
+	for(var i=0; i<candidate_keys.length; i++)
+	{
+		for(var j=i+1; j<candidate_keys.length; j++)
+		{
+			var k=0;
+			for(k=0; k<candidate_keys[i].length && k<candidate_keys[j].length; k++)
+			{
+				if(candidate_keys[i][k] != candidate_keys[j][k])
+					break;
+			}
+			if(candidate_keys[i].length == candidate_keys[j].length && k==candidate_keys[i].length)
+			{
+				candidate_keys.splice(j, 1);
+				j--;
+			}
+		}
+	}
+}
+
+function make_candidate_keys(potential_key_store, key, not_on_rhs)
+{
+	for(var i=0; i<potential_key_store.length; i++)
+	{
+		var temp_key = key.slice();
+		temp_key.push(potential_key_store[i]);
+		var closure = find_closure(temp_key, fd_lhs, fd_rhs);
+		if(closure.length == attributes.length)	//check if key becomes a superkey
+		{
+			// console.log("kuchh");
+			var is_candidate = true;
+			//check if key is indeed a candidate key
+			for(var j=0; j<temp_key.length; j++)
+			{
+				var in_notrhs = false;
+				for(var k=0; k<not_on_rhs.length && in_notrhs==false; k++)
+				{
+					if(not_on_rhs[k] == temp_key[j])
+						in_notrhs = true;
+				}
+				if(in_notrhs==false && temp_key[j]!=potential_key_store[i])
+				{
+					var temp_arr = temp_key.slice();
+					temp_arr.splice(j, 1);
+					var temp_closure = find_closure(temp_arr, fd_lhs, fd_rhs);
+					if(temp_closure.length == attributes.length)
+					{
+						is_candidate = false;
+						break;
+					}
+				}
+			}
+			if(is_candidate)
+			{
+				candidate_keys.push(temp_key);
+			}
+		}
+		else
+		{
+			var new_key_store = potential_key_store.slice();
+			new_key_store.splice(i, 1);
+			make_candidate_keys(new_key_store, temp_key, not_on_rhs);
+		}
+	}
+}
+
+function main_candidate_keys()
+{
+	if(candidate_keys_num % 2 == 0)
+	{
+		find_minimal_cover();
+		find_candidate_keys();
+		print_candidate_keys();
+	}
+	else
+	{
+		document.getElementById("candidate_keys_field").innerHTML = "";
+	}
+	candidate_keys_num++;
+}
+
+function print_candidate_keys()
+{
+	var field = "<fieldset>";
+	field += "<ul style=\"list-style-type:disc\">";
+	for(var i=0; i<candidate_keys.length; i++)
+	{
+		field += "<li>"
+		for(var j=0; j<candidate_keys[i].length; j++)
+			field += candidate_keys[i][j]+" ";
+		field += "</li>";
+	}
+	field += "</ul>"
+	field += "</fieldset><br>";
+	document.getElementById("candidate_keys_field").innerHTML = field;
 }
 
 function find_normal_form()
