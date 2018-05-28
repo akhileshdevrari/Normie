@@ -2,9 +2,13 @@ var fd_num = 1;
 var attributes = new Array();
 var fd_lhs = new Array();
 var fd_rhs = new Array();
+var original_fd_lhs = new Array();
+var original_fd_rhs = new Array();
 var minimal_cover_num = 0;
 var candidate_keys_num = 0;
+var check_normal_form_num = 0;
 var candidate_keys = new Array();
+var in_2nf, in_3nf, in_bcnf;
 
 window.addEventListener("load", initialize);
 
@@ -13,6 +17,8 @@ function initialize()
 	attributes = new Array();
 	fd_lhs = new Array();
 	fd_rhs = new Array();
+	original_fd_lhs = new Array();
+	original_fd_rhs = new Array();
 	candidate_keys = new Array();
 	if(minimal_cover_num%2 == 1)
 		main_minimal_cover();
@@ -20,6 +26,9 @@ function initialize()
 	if(candidate_keys_num%2 == 1)
 		main_candidate_keys();
 	candidate_keys_num = 0;
+	if(check_normal_form_num%2 == 1)
+		main_check_normal_form();
+	check_normal_form_num = 0;
 	document.getElementById('attributes_in').value = "";
 	for(var i=1; i<fd_num; i++)
 		delete_fd(i);
@@ -98,6 +107,11 @@ function lexer()
 		arr.sort();
 		fd_rhs.push(arr);
 	}
+
+	for(var i=0; i<fd_lhs.length; i++)
+		original_fd_lhs[i] = fd_lhs[i].slice();
+	for(var i=0; i<fd_rhs.length; i++)
+		original_fd_rhs[i] = fd_rhs[i].slice();
 }
 
 function fd_input()
@@ -379,8 +393,8 @@ function main_minimal_cover()
 {
 	if(minimal_cover_num % 2 == 0)
 	{
-			find_minimal_cover();
-			print_minimal_cover();
+		find_minimal_cover();
+		print_minimal_cover();
 	}
 	else
 	{
@@ -575,5 +589,225 @@ function print_candidate_keys()
 
 function find_normal_form()
 {
+	in_2nf = in_3nf = in_bcnf = true;
+	find_minimal_cover();
+	find_candidate_keys();
 
+	//Checking for 2NF
+	// If LHS of any non-trivial FD is proper subset of any candidate key, then the table cannot be in 2NF
+	for(var i=0; i<original_fd_lhs.length; i++)
+	{
+		var lhs_in_candidate_key = false;
+		var j=0;
+		for(j=0; j<candidate_keys.length; j++)
+		{
+			if(candidate_keys[j].length <= original_fd_lhs[i].length)
+				continue;
+			//check for each element in original_fd_lhs[i], if it is present in candidate_keys[j]
+			sum = 0;
+			for(var k=0; k<original_fd_lhs[i].length; k++)
+			{
+				var l=0;
+				for(l=0; l<candidate_keys[j].length; l++)
+				{
+					if(original_fd_lhs[i][k] == candidate_keys[j][l])
+					{
+						sum++;
+						break;
+					}
+				}
+			}
+			if(sum == original_fd_lhs[i].length)
+			{
+				lhs_in_candidate_key = true;
+				break;
+			}
+		}
+		//If LHS is not proper subset of any candidate key, 2nf property doesn't violate, we're safe
+		if(lhs_in_candidate_key == false)
+			continue;
+
+		//Check if all attributes in original_fd_rhs[i] are key attributes
+		var rhs_are_key = true;
+		for(var j=0; j<original_fd_rhs[i].length; j++)
+		{
+			var k;
+			for(k=0; k<candidate_keys.length; k++)
+			{
+				var l;
+				for(l=0; l<candidate_keys[k].length; l++)
+				{
+					if(candidate_keys[k][l] == original_fd_rhs[i][j])
+						break;
+				}
+				if(l != candidate_keys[k].length)
+					break;
+			}
+			if(k == candidate_keys.length)
+			{
+				rhs_are_key = false;
+				break;
+			}
+		}
+		//Now, lhs is not superkey and some rhs attributes are not key attributes, hence table is not in 2nf
+		if(rhs_are_key == false)
+		{
+			in_2nf = false;
+			break;
+		}
+	}
+	// console.log("in_2nf = "+in_2nf);
+
+	if(in_2nf == false)
+	{
+		in_3nf = in_bcnf = false;
+		return;
+	}
+
+	//Check for 3Nf
+	//For each FD, either LHS is a superkey or all attributes in RHS should be key attributes
+	for(var i=0; i<original_fd_lhs.length; i++)
+	{
+		var lhs_is_superkey = false;
+		//Check if lhs_is_superkey: 	for each candidate key, check if it is subset of original_fd_lhs[i]
+		for(var j=0; j<candidate_keys.length; j++)
+		{
+			if(candidate_keys[j].length > original_fd_lhs[i].length)
+				continue;
+
+			var sum = 0;
+			for(var k=0; k<candidate_keys[j].length; k++)
+			{
+				for(var l=0; l<original_fd_lhs[i].length; l++)
+				{
+					if(original_fd_lhs[i][l] == candidate_keys[j][k])
+					{
+						sum++;
+						break;
+					}
+				}
+			}
+			if(sum == candidate_keys[j].length)
+			{
+				lhs_is_superkey = true;
+				break;
+			}
+		}
+		// is lhs is superkey, we are safe
+		if(lhs_is_superkey)
+			continue;
+
+		//Check if all attributes in original_fd_rhs[i] are key attributes
+		var rhs_are_key = true;
+		for(var j=0; j<original_fd_rhs[i].length; j++)
+		{
+			var k;
+			for(k=0; k<candidate_keys.length; k++)
+			{
+				var l;
+				for(l=0; l<candidate_keys[k].length; l++)
+				{
+					if(candidate_keys[k][l] == original_fd_rhs[i][j])
+						break;
+				}
+				if(l != candidate_keys[k].length)
+					break;
+			}
+			if(k == candidate_keys.length)
+			{
+				rhs_are_key = false;
+				break;
+			}
+		}
+		//Now, lhs is not superkey and some rhs attributes are not key attributes, hence table is not in 3nf
+		if(rhs_are_key == false)
+		{
+			in_3nf = false;
+			break;
+		}
+	}
+	// console.log("in_3nf = "+in_3nf);
+	if(in_3nf==false)
+	{
+		in_bcnf = false;
+		return;
+	}
+
+	//Check for BCNF
+	//A table is in BCNF if and only if for every non-trivial FD, the LHS is a superkey. 
+	for(var i=0; i<original_fd_lhs.length; i++)
+	{
+		var lhs_is_superkey = false;
+		//Check if lhs_is_superkey: 	for each candidate key, check if it is subset of original_fd_lhs[i]
+		for(var j=0; j<candidate_keys.length; j++)
+		{
+			if(candidate_keys[j].length > original_fd_lhs[i].length)
+				continue;
+
+			var sum = 0;
+			for(var k=0; k<candidate_keys[j].length; k++)
+			{
+				for(var l=0; l<original_fd_lhs[i].length; l++)
+				{
+					if(original_fd_lhs[i][l] == candidate_keys[j][k])
+					{
+						sum++;
+						break;
+					}
+				}
+			}
+			if(sum == candidate_keys[j].length)
+			{
+				lhs_is_superkey = true;
+				break;
+			}
+		}
+		if(lhs_is_superkey == false)
+		{
+			in_bcnf = false;
+			break;
+		}
+	}
+	// console.log("in_bcnf = "+in_bcnf);
+
+}
+
+function main_check_normal_form()
+{
+	if(check_normal_form_num % 2 == 0)
+	{
+		find_normal_form();
+		print_normal_form();
+	}
+	else
+	{
+		document.getElementById("check_normal_form_field").innerHTML = "";
+	}
+	check_normal_form_num++;
+}
+
+function print_normal_form()
+{
+	var field = "<fieldset>";
+
+	field += "<span>2NF </span>";
+	if(in_2nf)
+		field += "<img src=\"yes.png\" alt=\"YES\">";
+	else field += "<img src=\"no.png\" alt=\"NO\">";
+	field += "<br>";
+
+	field += "<span>3NF </span>";
+	if(in_3nf)
+		field += "<img src=\"yes.png\" alt=\"YES\">";
+	else field += "<img src=\"no.png\" alt=\"NO\">";
+	field+="<br>";
+
+	field += "<span>BCNF</span>";
+	if(in_bcnf)
+		field += "<img src=\"yes.png\" alt=\"YES\">";
+	else field += "<img src=\"no.png\" alt=\"NO\">";
+
+
+	field += "</fieldset><br>";
+	document.getElementById("check_normal_form_field").innerHTML = field;
 }

@@ -42,10 +42,23 @@ fieldset{
 	background-color: white;
 	border:2px solid #00ccff;
 	-moz-border-radius:8px;
-    -webkit-border-radius:8px;	
-    border-radius:8px;	
-    color: black;
-    word-spacing: 10px;
+  -webkit-border-radius:8px;	
+  border-radius:8px;	
+  color: black;
+  word-spacing: 10px;
+}
+
+fieldset span{
+  font-size: 20px;
+  padding-right: 40px;
+  padding-left: 30px;
+  padding-top: 20px;
+  font-weight: bold;
+}
+
+fieldset img{
+  width: 30px;
+  height: 30px;
 }
 
 
