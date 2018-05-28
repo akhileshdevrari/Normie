@@ -6,9 +6,11 @@ var original_fd_lhs = new Array();
 var original_fd_rhs = new Array();
 var minimal_cover_num = 0;
 var candidate_keys_num = 0;
+var normalize_to_3nf_num = 0;
 var check_normal_form_num = 0;
 var candidate_keys = new Array();
 var in_2nf, in_3nf, in_bcnf;
+var three_nf = new Array();
 
 window.addEventListener("load", initialize);
 
@@ -20,6 +22,7 @@ function initialize()
 	original_fd_lhs = new Array();
 	original_fd_rhs = new Array();
 	candidate_keys = new Array();
+	three_nf = new Array();
 	if(minimal_cover_num%2 == 1)
 		main_minimal_cover();
 	minimal_cover_num = 0;
@@ -29,6 +32,9 @@ function initialize()
 	if(check_normal_form_num%2 == 1)
 		main_check_normal_form();
 	check_normal_form_num = 0;
+	if(normalize_to_3nf_num%2 == 1)
+		main_normalize_to_3nf();
+	normalize_to_3nf_num = 0;
 	document.getElementById('attributes_in').value = "";
 	for(var i=1; i<fd_num; i++)
 		delete_fd(i);
@@ -138,7 +144,7 @@ function error()
 
 function find_minimal_cover()
 {
-	// Start with filling attibutes[], fd_lhs[] and fd_rhs[] with initial data
+	// Start with filling attributes[], fd_lhs[] and fd_rhs[] with initial data
 	lexer();
 
 	//remove trivial FDs
@@ -309,6 +315,27 @@ function find_minimal_cover()
 			{
 				fd_rhs[i].splice(m, 1);
 				m--;
+			}
+		}
+	}
+
+	//For each attribute in some LHS, check if it is present in closure of other attributes, if yes, delete it
+	for(var i=0; i<fd_lhs.length; i++)
+	{
+		for(var j=0; j<fd_lhs[i].length; j++)
+		{
+			var temp_arr = fd_lhs[i].slice();
+			var att = fd_lhs[i][j];
+			temp_arr.splice(j, 1);
+			var closure = find_closure(temp_arr, fd_lhs, fd_rhs);
+			for(var k=0; k<closure.length; k++)
+			{
+				if(closure[k] == att)
+				{
+					fd_lhs[i].splice(j, 1);
+					j--;
+					break;
+				}
 			}
 		}
 	}
@@ -790,19 +817,19 @@ function print_normal_form()
 {
 	var field = "<fieldset>";
 
-	field += "<span>2NF </span>";
+	field += "<span class=\"normal_form\">2NF </span>";
 	if(in_2nf)
 		field += "<img src=\"yes.png\" alt=\"YES\">";
 	else field += "<img src=\"no.png\" alt=\"NO\">";
 	field += "<br>";
 
-	field += "<span>3NF </span>";
+	field += "<span class=\"normal_form\">3NF </span>";
 	if(in_3nf)
 		field += "<img src=\"yes.png\" alt=\"YES\">";
 	else field += "<img src=\"no.png\" alt=\"NO\">";
 	field+="<br>";
 
-	field += "<span>BCNF</span>";
+	field += "<span class=\"normal_form\">BCNF</span>";
 	if(in_bcnf)
 		field += "<img src=\"yes.png\" alt=\"YES\">";
 	else field += "<img src=\"no.png\" alt=\"NO\">";
@@ -810,4 +837,98 @@ function print_normal_form()
 
 	field += "</fieldset><br>";
 	document.getElementById("check_normal_form_field").innerHTML = field;
+}
+
+
+function main_normalize_to_3nf()
+{
+	if(normalize_to_3nf_num % 2 == 0)
+	{
+		find_minimal_cover();
+		var temp_lhs = new Array();
+		for(var i=0; i<fd_lhs.length; i++)
+		{
+			temp_lhs.push(fd_lhs[i].slice());
+			temp_lhs[i].sort();
+		}
+		var temp_rhs = new Array();
+		for(var i=0; i<fd_rhs.length; i++)
+		{
+			temp_rhs.push(fd_rhs[i].slice());
+			temp_rhs[i].sort();
+		}
+
+		console.log("temp_lhs");
+		for(var i=0; i<temp_lhs.length; i++)
+		{
+			console.log("i = "+i);
+			for(var j=0; j<temp_lhs[i].length; j++)
+				console.log(temp_lhs[i][j]);
+		}
+		console.log("temp_rhs");
+		for(var i=0; i<temp_rhs.length; i++)
+		{
+			console.log("i = "+i);
+			for(var j=0; j<temp_rhs[i].length; j++)
+				console.log(temp_rhs[i][j]);
+		}
+
+
+		//Merge two FDs if lhs is same
+		for(var i=0; i<temp_lhs.length; i++)
+		{
+			for(var j=i+1; j<temp_lhs.length; j++)
+			{
+				if(temp_lhs[i].length != temp_lhs[j].length)
+					continue;
+				var k=0;
+				for(k=0; k<temp_lhs[i].length; k++)
+				{
+					if(temp_lhs[i][k] != temp_lhs[j][k])
+						break;
+				}
+				if(k == temp_lhs[i].length)
+				{
+					console.log("i = "+i+"  j = "+j);
+					for(var k=0; k<temp_rhs[j].length; k++)
+					{
+						console.log("ding    "+temp_rhs[j][k]);
+						temp_rhs[i].push(temp_rhs[j][k]);
+					}
+					temp_lhs.splice(j, 1);
+					temp_rhs.splice(j, 1);
+					j--;
+				}
+			}
+			if(temp_lhs[i].length==0 || temp_rhs[i].length==0)
+			{
+				temp_lhs.splice(i, 1);
+				temp_rhs.splice(i, 1);
+			}
+		}
+
+
+		var field = "<fieldset>";
+		for(var i=0; i<temp_lhs.length; i++)
+		{
+			field += "<br><h1>Relation "+(i+1)+"</h1><br>";
+			field += "<span>Attributes : &nbsp;&nbsp;&nbsp;</span>";
+			for(var j=0; j<temp_lhs[i].length; j++)
+				field += temp_lhs[i][j]+" ";
+			for(var j=0; j<temp_rhs[i].length; j++)
+				field += temp_rhs[i][j]+" ";
+			field += "<br>";
+			field += "<span>Candidate Key :  </span>";
+			for(var j=0; j<temp_lhs[i].length; j++)
+				field += temp_lhs[i][j]+" ";
+			field += "<br><br>";
+		}
+		field += "</fieldset><br>";
+		document.getElementById("normalize_to_3nf_field").innerHTML = field;
+	}
+	else
+	{
+		document.getElementById("normalize_to_3nf_field").innerHTML = "";
+	}
+	normalize_to_3nf_num++;
 }

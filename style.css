@@ -49,6 +49,19 @@ fieldset{
 }
 
 fieldset span{
+  font-weight: bold;
+  padding-left: 30px;
+}
+
+fieldset h1{
+  font-size: 20px;
+  font-weight: bold;
+  font-family: arial;
+  text-align: left;
+  margin: 0px;
+}
+
+fieldset .normal_form{
   font-size: 20px;
   padding-right: 40px;
   padding-left: 30px;
