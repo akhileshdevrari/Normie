@@ -23,17 +23,28 @@
 
 			<br>
 			<div style="text-align: right;">
-			<button class="option red" type="button" onclick="initialize()">Reset</button><br>
+				<button class="option red" type="button" onclick="initialize()">Reset</button><br>
 			</div>
+
 			<br>
 			<button class="option blue" type="button" onclick="main_minimal_cover()">Minimal Cover</button><br>
 			<span id="minimal_cover_field"></span>
-			<button class="option blue" type="button" onclick="main_candidate_keys()">Candidate Keys</button><br>
-			<span id="candidate_keys_field"></span>
+
+			<!-- <div style="text-align: right;"> -->
+				<button class="option blue" type="button" onclick="main_candidate_keys()">Candidate Keys</button><br>
+				<span id="candidate_keys_field"></span>
+			<!-- </div> -->
+
 			<button class="option blue" type="button" onclick="main_check_normal_form()">Normal Form</button><br>
 			<span id="check_normal_form_field"></span>
-			<button class="option blue" type="button" onclick="main_normalize_to_3nf()">Normalize to 3NF</button><br>
-			<span id="normalize_to_3nf_field"></span>
+
+			<!-- <div style="text-align: right;"> -->
+				<button class="option blue" type="button" onclick="main_normalize_to_3nf()">Normalize to 3NF</button><br>
+				<span id="normalize_to_3nf_field"></span>
+			<!-- </div> -->
+
+			<button class="option blue" type="button" onclick="main_find_closure()">Find Closure</button><br>
+			<span id="find_closure_field"></span>
 		</form>
 	</div>
 </div>
