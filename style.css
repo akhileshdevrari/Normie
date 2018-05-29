@@ -92,10 +92,6 @@ fieldset .find_closure{
   display: inline-block;
 }
 
-.option:hover {
-  cursor: url(http://cur.cursors-4u.net/symbols/sym-1/sym46.cur), auto;
-}
-
 .blue {
   color: #006bb3;
   border: 2px #55acee solid;
