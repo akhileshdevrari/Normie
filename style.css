@@ -96,6 +96,7 @@ fieldset .find_closure{
   color: #006bb3;
   border: 2px #55acee solid;
   width: 200px;
+  background-color: white;
 }
 
 .blue:hover {
@@ -168,4 +169,29 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+/* Hide the file input using
+opacity */
+[type=file] {
+    position: absolute;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    cursor: pointer;
+}
+
+label {
+  cursor: pointer;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  text-decoration: none;
+  padding: 10px;
+  font-size: 15px;
+  transition: .3s;
+  -webkit-transition: .3s;
+  -moz-transition: .3s;
+  -o-transition: .3s;
+  display: inline-block;
+  text-align: center;
+  max-width: 175px;
 }

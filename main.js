@@ -19,6 +19,7 @@ var normal_form_steps = new Array();
 var convert_to_3nf_steps = new Array();
 var minimal_cover_steps_num;
 var candidate_keys_steps_num;
+var tsv_text;
 
 window.addEventListener("load", initialize);
 
@@ -1199,3 +1200,103 @@ function main_find_closure_two()
 		field += closure[i]+" ";
 	document.getElementById("find_closure_field_two").innerHTML = field;
 }
+
+
+
+function read_tsv(uploaded_tsv)
+{
+	//Just to check whether or not FILE API is supported in browser or not
+	if(!window.File)
+	{
+		alert('File API is not supported by your browser');
+	}
+
+	// console.log("name = "+uploaded_tsv.name);
+
+	var reader = new FileReader();	
+	reader.readAsText(uploaded_tsv);
+	reader.onload = function(e)
+	{
+		tsv_text = reader.result;
+		main_uploaded_tsv();
+	}
+}
+
+function main_uploaded_tsv()
+{
+	//Seperate first line words, they are name of attributes
+	var temp_attributes_string = "";
+	var tsv_data = new Array();
+	var i, num_rows = 0, num_cols = 0;
+	for(i=0; i<tsv_text.length; i++)
+	{
+		if(tsv_text[i] == '\n')
+			break;
+		if(tsv_text[i] == '\t')
+			temp_attributes_string += " ,   ";
+		else temp_attributes_string += tsv_text[i];
+	}
+	document.getElementById('attributes_in').value = temp_attributes_string;
+	lexer();
+	num_cols = attributes.length;
+
+	//Tokenize the remaining data in tsv_text and store it in tsv_data array
+	//i already pointing to just before start of second line
+	i++;
+	while(i < tsv_text.length)
+	{
+		//increase the number of columns
+		num_rows++;
+		var temp_arr = new Array();
+		while(tsv_text[i] != '\n' && i<tsv_text.length)
+		{
+			var word = "";
+			while(tsv_text[i]!='\t' && tsv_text[i]!='\n' && i<tsv_text.length)
+			{
+				word += tsv_text[i];
+				i++;
+			}
+			if(word != "")
+				temp_arr.push(word);
+			else
+				i++;
+		}
+		i++;
+		tsv_data.push(temp_arr.slice());
+	}
+
+	//Now read other columns and try to guess Functional Dependencies from the data stored in table
+	//Suppose for each tuple, wherever a is fixed, b is also fixed, then there is possibility that either a->b or b->a
+	var temp_fd_rhs = new Array();
+	for(var i=0; i<num_cols; i++)
+	{
+		for(var j=0; j<num_cols; j++)
+		{
+			if(i==j)
+				continue;
+			//Compare column[i] and column[j], to see if there seem to be a function dependency
+			var hash_map = {};
+			var k;
+			for(k=0; k<num_rows; k++)
+			{
+				if(hash_map[tsv_data[k][i]] == null)
+				{
+					hash_map[tsv_data[k][i]] = tsv_data[k][j];
+				}
+				if(hash_map[tsv_data[k][i]] != tsv_data[k][j])
+					break;
+			}
+			//If k == num_rows, it means [i] -> [j] is a possible FD
+			if(k == num_rows)
+			{
+				document.getElementById("lhs"+(fd_num-1)).value = attributes[i];
+				document.getElementById("rhs"+(fd_num-1)).value = attributes[j];
+				fd_input();
+			}
+		}
+	}
+
+}
+
+
+// mysql mydb -e "select * from mytable" -B > mytable.tsv 

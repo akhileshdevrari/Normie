@@ -28,24 +28,27 @@
 			</div>
 
 			<br>
-			<button class="option blue" type="button" onclick="main_minimal_cover()">Minimal Cover</button><br>
+			<button class="option blue" type="button" onclick="main_minimal_cover()">Minimal Cover</button>
+			&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
 			<span id="minimal_cover_field"></span>
 
-			<!-- <div style="text-align: right;"> -->
-				<button class="option blue" type="button" onclick="main_candidate_keys()">Candidate Keys</button><br>
-				<span id="candidate_keys_field"></span>
-			<!-- </div> -->
+			<button class="option blue" type="button" onclick="main_candidate_keys()">Candidate Keys</button><br>
+			<span id="candidate_keys_field"></span>
 
-			<button class="option blue" type="button" onclick="main_check_normal_form()">Normal Form</button><br>
+			<button class="option blue" type="button" onclick="main_check_normal_form()">Normal Form</button>
+			&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
 			<span id="check_normal_form_field"></span>
 
-			<!-- <div style="text-align: right;"> -->
-				<button class="option blue" type="button" onclick="main_normalize_to_3nf()">Normalize to 3NF</button><br>
-				<span id="normalize_to_3nf_field"></span>
-			<!-- </div> -->
+			<button class="option blue" type="button" onclick="main_normalize_to_3nf()">Normalize to 3NF</button><br>
+			<span id="normalize_to_3nf_field"></span>
 
-			<button class="option blue" type="button" onclick="main_find_closure()">Find Closure</button><br>
+			<button class="option blue" type="button" onclick="main_find_closure()">Find Closure</button>
+			&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;
 			<span id="find_closure_field"></span>
+				
+
+			<input type="file" onchange="read_tsv(this.files[0])" id="upload_tsv" class="blue">
+			<label for="upload_tsv" class="blue">Upload TSV</label>
 		</form>
 	</div>
 </div>
